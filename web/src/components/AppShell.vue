@@ -1,138 +1,107 @@
 <template>
-  <div class="shell ai-shell" :class="{ 'sidebar-collapsed': appStore.sidebarCollapsed }" @click="closeSurfaceMenus">
-    <aside class="shell-sidebar" :class="{ collapsed: appStore.sidebarCollapsed }" @click.stop>
-      <div class="ai-brand-row">
-        <button
-          class="brand-mark-button"
-          :aria-label="appStore.sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'"
-          :title="appStore.sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'"
-          type="button"
-          @click="toggleSidebarCollapsed"
-        >
-          <span class="brand-mark"></span>
-        </button>
+  <div class="app-shell" :class="{ 'sidebar-collapsed': appStore.sidebarCollapsed }" @click="closeOpenMenus">
+    <aside class="app-sidebar">
+      <button class="sidebar-toggle icon-button" type="button" @click.stop="toggleSidebar" title="Hide sidebar">
+        <PanelLeftClose v-if="!appStore.sidebarCollapsed" :size="19" />
+        <PanelLeftOpen v-else :size="19" />
+      </button>
 
-        <button class="ai-collapse-button" type="button" title="Toggle menu" @click="toggleSidebarCollapsed">
-          <PanelLeftClose v-if="!appStore.sidebarCollapsed" :size="18" />
-          <PanelLeftOpen v-else :size="18" />
+      <button class="workspace-switcher" type="button" @click.stop="toggleWorkspaceMenu">
+        <span class="workspace-tag">
+          <span class="workspace-icon">
+            <LayoutDashboard :size="15" />
+          </span>
+          <span class="workspace-copy">
+            <small>Workspace</small>
+            <strong>{{ activeWorkspaceLabel }}</strong>
+          </span>
+        </span>
+        <ChevronsUpDown :size="15" />
+      </button>
+
+      <div v-if="appStore.workspaceMenuOpen" class="workspace-menu">
+        <button
+          v-for="workspace in workspaces"
+          :key="workspace.slug"
+          class="workspace-option"
+          :class="{ active: workspace.slug === appStore.activeWorkspace, disabled: !workspace.enabled }"
+          type="button"
+          :disabled="!workspace.enabled"
+          @click="activateWorkspace(workspace.slug)"
+        >
+          <span class="workspace-title">{{ workspace.label }}</span>
+          <span class="workspace-subtle">{{ workspace.statusLabel }}</span>
+          <Check v-if="workspace.slug === appStore.activeWorkspace" :size="14" />
+          <Lock v-else-if="!workspace.enabled" :size="14" />
         </button>
       </div>
 
-      <button class="ai-new-button" type="button" title="New chat" @click="createNewBrainChat">
-        <span class="ai-new-icon">
-          <Plus :size="21" />
-        </span>
-        <span>New</span>
-      </button>
+      <nav class="sidebar-nav">
+        <RouterLink
+          v-for="item in programmeNav"
+          :key="item.key"
+          :to="workspaceRoute(item.to)"
+          class="nav-item"
+          active-class="active"
+          @click="closeOpenMenus"
+        >
+          <component :is="navIcons[item.key]" :size="16" />
+          <span>{{ item.label }}</span>
+        </RouterLink>
 
-      <nav class="ai-sidebar-menu">
-        <div class="workspace-stack">
-          <button
-            class="ai-sidebar-link workspace-trigger"
-            type="button"
-            :title="activeWorkspaceLabel"
-            @click="toggleWorkspaceMenu"
-          >
-            <span class="ai-sidebar-icon live">
-              <Monitor :size="18" />
-            </span>
-            <span class="workspace-trigger-copy single">
-              <strong>{{ activeWorkspaceLabel }}</strong>
-            </span>
-            <ChevronsUpDown :size="15" />
-          </button>
-
-          <div v-if="appStore.workspaceMenuOpen" class="workspace-menu ai-workspace-menu">
-            <button
-              v-for="workspace in workspaces"
-              :key="workspace.slug"
-              class="workspace-option"
-              :class="{ active: workspace.slug === appStore.activeWorkspace, disabled: !workspace.enabled }"
-              type="button"
-              :disabled="!workspace.enabled"
-              @click="activateWorkspace(workspace.slug)"
-            >
-              <span class="workspace-option-copy">
-                <strong>{{ workspace.label }}</strong>
-                <small>{{ workspace.statusLabel }}</small>
-              </span>
-              <span class="workspace-option-status">
-                <Check v-if="workspace.slug === appStore.activeWorkspace" :size="16" />
-                <Lock v-else-if="!workspace.enabled" :size="16" />
-              </span>
-            </button>
-          </div>
-        </div>
-
-        <button class="ai-sidebar-link" type="button" title="Spaces" @click="goBrain">
-          <FolderKanban :size="18" />
+        <RouterLink to="/spaces" class="nav-item nav-space" active-class="active" @click="closeOpenMenus">
+          <FolderKanban :size="16" />
           <span>Spaces</span>
-        </button>
+        </RouterLink>
       </nav>
 
-      <section class="ai-history-panel">
-        <div class="ai-history-heading">
-          <History :size="17" />
-          <span>History</span>
-        </div>
-
+      <div class="sidebar-footer">
         <button
-          v-for="thread in appStore.workspaceActiveThreads.slice(0, 10)"
-          :key="thread.threadId"
-          class="ai-history-item"
+          class="icon-button profile-launcher"
           type="button"
-          @click="openThread(thread.threadId)"
+          :title="profileMenuOpen ? 'Close profile menu' : 'Open profile menu'"
+          @click.stop="toggleProfileMenu"
         >
-          <span>{{ thread.title }}</span>
-          <i aria-hidden="true"></i>
-        </button>
-      </section>
-
-      <div class="sidebar-footer ai-footer">
-        <button class="ai-profile-trigger" type="button" title="Profile menu" @click.stop="toggleProfileMenu">
-          <span class="account-avatar">JD</span>
-          <span class="account-copy">
-            <strong>John Doe</strong>
-            <small>Signed in</small>
-          </span>
-          <ChevronDown :size="15" />
+          <span class="profile-icon">JD</span>
         </button>
 
-        <div v-if="profileMenuOpen" class="profile-menu" @click.stop>
-          <RouterLink class="profile-menu-item" to="/settings" @click="closeProfileMenu">
+        <div v-if="profileMenuOpen" class="profile-popover">
+          <RouterLink class="profile-item" to="/settings" @click="closeProfileMenu">
             <Settings2 :size="15" />
             <span>Settings</span>
           </RouterLink>
-          <button class="profile-menu-item" type="button" @click="logout">
-            <ShieldAlert :size="15" />
+          <button class="profile-item" type="button" @click="logout">
+            <LogOut :size="15" />
             <span>Sign out</span>
           </button>
         </div>
       </div>
     </aside>
 
-    <main class="shell-main">
+    <main class="app-main">
       <header class="app-topbar">
-        <nav class="topbar-nav" aria-label="Programme pages">
+        <div class="app-topline">
+          <p>{{ activePageLabel }}</p>
+          <small>{{ activeWorkspaceLabel }} · workspace</small>
+        </div>
+
+        <div v-if="showProgrammeTabs" class="app-topbar-tabs">
           <RouterLink
             v-for="item in programmeNav"
             :key="item.key"
             :to="workspaceRoute(item.to)"
-            class="topbar-link"
+            class="tab-link"
             active-class="active"
-            @click="closeSurfaceMenus"
           >
             <component :is="navIcons[item.key]" :size="15" />
             <span>{{ item.label }}</span>
           </RouterLink>
-        </nav>
-
-        <div class="topbar-actions" aria-hidden="true"></div>
+        </div>
       </header>
 
-      <div class="page-body">
+      <section class="app-page-content">
         <RouterView />
-      </div>
+      </section>
     </main>
   </div>
 </template>
@@ -142,18 +111,16 @@ import {
   Check,
   ChevronsUpDown,
   FolderKanban,
-  History,
+  LayoutList,
+  BarChart3,
   LayoutDashboard,
   Lock,
-  Monitor,
+  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  Plus,
-  ChevronDown,
   Settings2,
-  ShieldAlert,
 } from '@lucide/vue'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import {
   programmeNav,
@@ -168,70 +135,48 @@ const appStore = useAppStore()
 const profileMenuOpen = ref(false)
 
 const navIcons = {
-  overview: LayoutDashboard,
-  'data-health': ShieldAlert,
+  overview: LayoutList,
+  'data-health': BarChart3,
 } as const
 
 const activeWorkspaceLabel = computed(
-  () => workspaces.find((workspace) => workspace.slug === appStore.activeWorkspace)?.label ?? 'Unknown workspace',
+  () => workspaces.find((workspace) => workspace.slug === appStore.activeWorkspace)?.label ?? 'Isomo',
 )
-
-const workspaceRoute = (baseRoute: string) =>
-  baseRoute.replace('/programmes/circles', `/programmes/${appStore.activeWorkspace}`)
-
-const activeProgrammeKey = computed(() => {
-  const routeName = typeof route.name === 'string' ? route.name : ''
-  return programmeNav.find((item) => item.key === routeName)?.key ?? 'overview'
+const activePageLabel = computed(() => {
+  const title = route.meta?.pageTitle
+  if (typeof title === 'string' && title.length > 0) return title
+  if (route.path === '/spaces') return 'Spaces'
+  if (route.path === '/settings') return 'Settings'
+  return 'Overview'
 })
+const showProgrammeTabs = computed(() => route.path.includes('/programmes/'))
 
-const isProgrammeView = computed(() => {
-  const routeName = typeof route.name === 'string' ? route.name : ''
-  return programmeNav.some((item) => item.key === routeName)
-})
+const workspaceRoute = (baseRoute: string) => baseRoute.replace('/programmes/circles', `/programmes/${appStore.activeWorkspace}`)
 
 const activateWorkspace = (workspaceSlug: WorkspaceSlug) => {
   const workspace = workspaces.find((item) => item.slug === workspaceSlug)
   if (!workspace?.enabled) return
 
   appStore.setWorkspace(workspaceSlug)
-
-  if (isProgrammeView.value) {
-    void router.push(`/programmes/${workspaceSlug}/${activeProgrammeKey.value}`)
-    return
+  const targetPath = workspaceSlugRoute(route.path)
+  if (targetPath) {
+    void router.push(targetPath)
   }
-
-  appStore.closeSurfaceMenus()
 }
 
-const goBrain = () => {
-  closeSurfaceMenus()
-  void router.push('/isomo-brain')
-}
-
-const createNewBrainChat = () => {
-  appStore.createThread()
-  closeSurfaceMenus()
-  void router.push('/isomo-brain')
-}
-
-const openThread = (threadId: string) => {
-  const thread = appStore.workspaceActiveThreads.find((item) => item.threadId === threadId)
-  if (!thread) return
-
-  if (thread.spaceId !== appStore.rootSpaceId) {
-    appStore.setActiveSpace(thread.spaceId)
+const workspaceSlugRoute = (path: string) => {
+  if (path.includes('/programmes/')) {
+    const section = path.split('/').pop()
+    return section ? `/programmes/${appStore.activeWorkspace}/${section}` : undefined
   }
-
-  appStore.setActiveThread(threadId)
-  closeSurfaceMenus()
-  void router.push('/isomo-brain')
+  return undefined
 }
 
 const toggleWorkspaceMenu = () => {
   appStore.toggleWorkspaceMenu()
 }
 
-const toggleSidebarCollapsed = () => {
+const toggleSidebar = () => {
   appStore.toggleSidebarCollapsed()
 }
 
@@ -243,38 +188,13 @@ const closeProfileMenu = () => {
   profileMenuOpen.value = false
 }
 
-const logout = () => {
-  closeProfileMenu()
-  void router.push('/login')
-}
-
-const closeSurfaceMenus = () => {
+const closeOpenMenus = () => {
   closeProfileMenu()
   appStore.closeSurfaceMenus()
 }
 
-watch(
-  () => route.params.workspaceSlug,
-  (workspaceSlug) => {
-    if (typeof workspaceSlug !== 'string') return
-
-    const workspace = workspaces.find((item) => item.slug === workspaceSlug)
-    if (!workspace?.enabled) {
-      void router.replace(`/programmes/${appStore.activeWorkspace}/${activeProgrammeKey.value}`)
-      return
-    }
-
-    if (workspaceSlug !== appStore.activeWorkspace) {
-      appStore.setWorkspace(workspaceSlug as WorkspaceSlug)
-    }
-  },
-  { immediate: true },
-)
-
-watch(
-  () => route.fullPath,
-  () => {
-    closeSurfaceMenus()
-  },
-)
+const logout = () => {
+  closeProfileMenu()
+  void router.push('/login')
+}
 </script>

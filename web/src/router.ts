@@ -33,7 +33,11 @@ export const router = createRouter({
         },
         {
           path: 'isomo-brain',
-          name: 'brain',
+          redirect: '/spaces',
+        },
+        {
+          path: 'spaces',
+          name: 'spaces',
           component: BrainPage,
           meta: {
             pageTitle: 'Spaces',
@@ -57,14 +61,6 @@ export const router = createRouter({
             pageTitle: 'Data Health',
             pageEyebrow: 'Programme workspace',
           },
-        },
-        {
-          path: 'programmes/:workspaceSlug/scholars',
-          redirect: (to) => `/programmes/${to.params.workspaceSlug}/overview`,
-        },
-        {
-          path: 'programmes/:workspaceSlug/schools',
-          redirect: (to) => `/programmes/${to.params.workspaceSlug}/overview`,
         },
       ],
     },

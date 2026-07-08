@@ -14,6 +14,13 @@ export type Workspace = {
   statusLabel: string
 }
 
+export type BrainMessage = {
+  id: string
+  role: 'user' | 'assistant'
+  text: string
+  loading?: boolean
+}
+
 export type BrainSpace = {
   spaceId: string
   workspaceSlug: WorkspaceSlug
@@ -29,10 +36,7 @@ export type BrainThread = {
   title: string
   updatedAt: string
   status: BrainThreadStatus
-  messages: Array<{
-    id: string
-    role: 'user' | 'assistant'
-  }>
+  messages: BrainMessage[]
 }
 
 export const workspaces: Workspace[] = [
@@ -55,26 +59,35 @@ const SPACES_KEY = 'isomo-brain-spaces'
 const SPACE_KEY = 'isomo-brain-space'
 const SIDEBAR_KEY = 'isomo-sidebar-collapsed'
 const THEME_PRESET_KEY = 'isomo-theme-preset'
-const ROOT_SPACE_PREFIX = 'root-space'
+const ROOT_SPACE_SUFFIX = 'root-space'
 
 const defaultSpaces: BrainSpace[] = [
   {
     spaceId: 'circles-space-1',
     workspaceSlug: 'circles',
-    title: 'Space 1',
+    title: 'Project Alpha',
     updatedAt: 'Updated now',
-    status: 'active',
-  },
-  {
-    spaceId: 'circles-space-2',
-    workspaceSlug: 'circles',
-    title: 'Space 2',
-    updatedAt: 'Updated earlier',
     status: 'active',
   },
 ]
 
+const emptyMessage = (role: BrainMessage['role'], text: string, loading = false): BrainMessage => ({
+  id: `msg-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+  role,
+  text,
+  loading,
+})
+
 const defaultThreads: BrainThread[] = [
+  {
+    threadId: 'circles-root-thread-1',
+    spaceId: 'circles-root-space',
+    workspaceSlug: 'circles',
+    title: 'General',
+    updatedAt: 'Updated now',
+    status: 'active',
+    messages: [],
+  },
   {
     threadId: 'circles-thread-1',
     spaceId: 'circles-space-1',
@@ -82,34 +95,7 @@ const defaultThreads: BrainThread[] = [
     title: 'Conversation 1',
     updatedAt: 'Updated now',
     status: 'active',
-    messages: [
-      { id: 'm1', role: 'user' },
-      { id: 'm2', role: 'assistant' },
-    ],
-  },
-  {
-    threadId: 'circles-thread-2',
-    spaceId: 'circles-space-1',
-    workspaceSlug: 'circles',
-    title: 'Conversation 2',
-    updatedAt: 'Updated earlier',
-    status: 'active',
-    messages: [
-      { id: 'm3', role: 'user' },
-      { id: 'm4', role: 'assistant' },
-    ],
-  },
-  {
-    threadId: 'circles-thread-3',
-    spaceId: 'circles-space-2',
-    workspaceSlug: 'circles',
-    title: 'Conversation 1',
-    updatedAt: 'Updated earlier',
-    status: 'active',
-    messages: [
-      { id: 'm5', role: 'user' },
-      { id: 'm6', role: 'assistant' },
-    ],
+    messages: [],
   },
 ]
 
@@ -127,7 +113,7 @@ const getStoredWorkspace = (): WorkspaceSlug => {
 
 const getStoredThread = (): string => localStorage.getItem(THREAD_KEY) ?? defaultThreads[0].threadId
 
-const getStoredSpace = (): string => localStorage.getItem(SPACE_KEY) ?? defaultSpaces[0].spaceId
+const getStoredSpace = (): string => localStorage.getItem(SPACE_KEY) ?? 'circles-root-space'
 
 const getStoredSidebarCollapsed = (): boolean => localStorage.getItem(SIDEBAR_KEY) === 'true'
 
@@ -152,13 +138,21 @@ const getStoredThreads = (): BrainThread[] => {
     if (!Array.isArray(parsed) || parsed.length === 0) return defaultThreads
 
     return parsed.map((thread, index) => ({
-      threadId: thread.threadId ?? `circles-thread-restored-${index}`,
-      spaceId: thread.spaceId ?? 'circles-space-1',
+      threadId: thread.threadId ?? `circles-restored-thread-${index}`,
+      spaceId: thread.spaceId ?? 'circles-root-space',
       workspaceSlug: (thread.workspaceSlug as WorkspaceSlug | undefined) ?? 'circles',
       title: thread.title ?? `Conversation ${index + 1}`,
-      updatedAt: thread.updatedAt ?? 'Updated earlier',
+      updatedAt: thread.updatedAt ?? 'Updated now',
       status: thread.status ?? 'active',
-      messages: Array.isArray(thread.messages) ? thread.messages : [],
+      messages:
+        Array.isArray(thread.messages) && thread.messages.length > 0
+          ? thread.messages.map((message, msgIndex) => ({
+              id: message.id ?? `msg-${index}-${msgIndex}`,
+              role: message.role === 'assistant' ? 'assistant' : 'user',
+              text: typeof message.text === 'string' ? message.text : '',
+              loading: Boolean(message.loading),
+            }))
+          : [],
     }))
   } catch {
     return defaultThreads
@@ -174,16 +168,18 @@ const getStoredSpaces = (): BrainSpace[] => {
     if (!Array.isArray(parsed) || parsed.length === 0) return defaultSpaces
 
     return parsed.map((space, index) => ({
-      spaceId: space.spaceId ?? `circles-space-restored-${index}`,
+      spaceId: space.spaceId ?? `circles-restored-space-${index}`,
       workspaceSlug: (space.workspaceSlug as WorkspaceSlug | undefined) ?? 'circles',
       title: space.title ?? `Space ${index + 1}`,
-      updatedAt: space.updatedAt ?? 'Updated earlier',
+      updatedAt: space.updatedAt ?? 'Updated now',
       status: space.status ?? 'active',
     }))
   } catch {
     return defaultSpaces
   }
 }
+
+const touchTimestamp = () => 'Updated now'
 
 export const useAppStore = defineStore('app', () => {
   const theme = ref<ThemeMode>(getStoredTheme())
@@ -192,100 +188,86 @@ export const useAppStore = defineStore('app', () => {
   const workspaceMenuOpen = ref(false)
   const sidebarCollapsed = ref(getStoredSidebarCollapsed())
   const brainSourcesOpen = ref(true)
+
   const spaces = ref<BrainSpace[]>(getStoredSpaces())
   const threads = ref<BrainThread[]>(getStoredThreads())
-  const activeSpaceId = ref(getStoredSpace())
+  const activeSpaceId = ref<string>(getStoredSpace())
   const activeThreadId = ref(getStoredThread())
-  const rootSpaceId = computed(() => `${activeWorkspace.value}-${ROOT_SPACE_PREFIX}`)
+
+  const rootSpaceId = computed(() => `${activeWorkspace.value}-${ROOT_SPACE_SUFFIX}`)
+
+  const rootSpace = computed<BrainSpace>(() => ({
+    spaceId: rootSpaceId.value,
+    workspaceSlug: activeWorkspace.value,
+    title: 'General',
+    updatedAt: touchTimestamp(),
+    status: 'active',
+  }))
 
   const availableSpaces = computed(() =>
     spaces.value.filter((space) => space.workspaceSlug === activeWorkspace.value && space.status === 'active'),
   )
 
-  const activeSpace = computed(
-    () => availableSpaces.value.find((space) => space.spaceId === activeSpaceId.value) ?? availableSpaces.value[0],
-  )
+  const spacesWithRoot = computed(() => [rootSpace.value, ...availableSpaces.value])
 
-  const availableThreads = computed(() => {
-    if (!activeSpace.value) return []
-    return threads.value.filter(
+  const activeSpace = computed(() => {
+    const active = spacesWithRoot.value.find((space) => space.spaceId === activeSpaceId.value)
+    return active ?? rootSpace.value
+  })
+
+  const workspaceThreads = computed(() =>
+    threads.value.filter(
       (thread) =>
         thread.workspaceSlug === activeWorkspace.value &&
-        thread.spaceId === activeSpace.value?.spaceId &&
-        thread.status === 'active',
-    )
-  })
+        thread.status !== 'deleted' &&
+        thread.status !== 'archived',
+    ),
+  )
 
   const workspaceActiveThreads = computed(() =>
     threads.value.filter((thread) => thread.workspaceSlug === activeWorkspace.value && thread.status === 'active'),
   )
 
   const workspaceRootThreads = computed(() =>
-    workspaceActiveThreads.value.filter((thread) => thread.spaceId === rootSpaceId.value),
+    workspaceThreads.value.filter((thread) => thread.spaceId === rootSpaceId.value),
   )
 
-  const activeThreadCandidates = computed(() =>
-    threads.value.filter(
-      (thread) =>
-        thread.workspaceSlug === activeWorkspace.value &&
-        thread.status === 'active' &&
-        (thread.spaceId === rootSpaceId.value ||
-          (activeSpace.value && thread.spaceId === activeSpace.value.spaceId) ||
-          thread.spaceId === availableSpaces.value[0]?.spaceId),
-    ),
+  const threadsByActiveSpace = computed(() =>
+    workspaceThreads.value.filter((thread) => thread.spaceId === activeSpace.value.spaceId && thread.status === 'active'),
   )
 
   const archivedThreads = computed(() => threads.value.filter((thread) => thread.status === 'archived'))
 
   const deletedThreads = computed(() => threads.value.filter((thread) => thread.status === 'deleted'))
 
-  const activeThread = computed(
-    () =>
-      activeThreadCandidates.value.find((thread) => thread.threadId === activeThreadId.value) ??
-      availableThreads.value[0] ??
-      workspaceRootThreads.value[0] ??
-      activeThreadCandidates.value[0],
-  )
+  const activeThread = computed(() => {
+    const direct = workspaceThreads.value.find((thread) => thread.threadId === activeThreadId.value)
+    if (direct) return direct
 
-  const syncActiveSpace = () => {
-    const currentSpace = availableSpaces.value.find((space) => space.spaceId === activeSpaceId.value)
-    if (currentSpace) return
-    activeSpaceId.value = availableSpaces.value[0]?.spaceId ?? ''
-  }
-
-  const syncActiveThread = () => {
-    const currentThread = activeThreadCandidates.value.find((thread) => thread.threadId === activeThreadId.value)
-    if (currentThread) return
-    activeThreadId.value =
-      availableThreads.value[0]?.threadId ??
-      workspaceRootThreads.value[0]?.threadId ??
-      activeThreadCandidates.value[0]?.threadId ??
-      ''
-  }
+    return threadsByActiveSpace.value[0] ?? workspaceRootThreads.value[0] ?? workspaceThreads.value[0]
+  })
 
   const syncSelections = () => {
-    syncActiveSpace()
-    syncActiveThread()
-  }
+    const currentSpaceExists = spacesWithRoot.value.some((space) => space.spaceId === activeSpaceId.value)
+    if (!currentSpaceExists) {
+      activeSpaceId.value = rootSpace.value.spaceId
+    }
 
-  const updateThreadList = (transform: (thread: BrainThread) => BrainThread) => {
-    threads.value = threads.value.map(transform)
-    syncSelections()
+    const currentThreadExists = workspaceThreads.value.some((thread) => thread.threadId === activeThreadId.value)
+    if (!currentThreadExists) {
+      activeThreadId.value =
+        threadsByActiveSpace.value[0]?.threadId ?? workspaceRootThreads.value[0]?.threadId ?? workspaceThreads.value[0]?.threadId ?? ''
+    }
   }
 
   const nextSpaceTitle = () => {
-    const count = spaces.value.filter((space) => space.workspaceSlug === activeWorkspace.value).length
-    return `Space ${count + 1}`
+    const count = availableSpaces.value.length + 1
+    return `Space ${count}`
   }
 
   const nextThreadTitle = (spaceId: string) => {
-    const count = threads.value.filter(
-      (thread) =>
-        thread.workspaceSlug === activeWorkspace.value &&
-        thread.spaceId === spaceId &&
-        thread.status === 'active',
-    ).length
-    return `Conversation ${count + 1}`
+    const count = workspaceThreads.value.filter((thread) => thread.spaceId === spaceId).length + 1
+    return `Conversation ${count}`
   }
 
   const closeWorkspaceMenu = () => {
@@ -296,17 +278,21 @@ export const useAppStore = defineStore('app', () => {
     closeWorkspaceMenu()
   }
 
-  const toggleSidebarCollapsed = () => {
-    sidebarCollapsed.value = !sidebarCollapsed.value
-    closeSurfaceMenus()
-  }
-
   const setTheme = (nextTheme: ThemeMode) => {
     theme.value = nextTheme
   }
 
   const setThemePreset = (nextPreset: ThemePreset) => {
     themePreset.value = nextPreset
+  }
+
+  const applyTheme = (nextTheme: ThemeMode, nextPreset: ThemePreset = themePreset.value) => {
+    const root = document.documentElement
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const resolvedTheme = nextTheme === 'system' ? (prefersDark ? 'dark' : 'light') : nextTheme
+    root.dataset.theme = resolvedTheme
+    root.dataset.themePreset = nextPreset
+    root.style.colorScheme = resolvedTheme
   }
 
   const setWorkspace = (workspaceSlug: WorkspaceSlug) => {
@@ -318,15 +304,23 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const setActiveSpace = (spaceId: string) => {
-    const space = availableSpaces.value.find((candidate) => candidate.spaceId === spaceId)
-    if (!space) return
+    const foundSpace = spacesWithRoot.value.find((candidate) => candidate.spaceId === spaceId)
+    if (!foundSpace) return
     activeSpaceId.value = spaceId
-    syncActiveThread()
+    if (foundSpace.spaceId === rootSpaceId.value) {
+      activeThreadId.value = workspaceRootThreads.value[0]?.threadId ?? threadsByActiveSpace.value[0]?.threadId ?? ''
+    } else {
+      activeThreadId.value =
+        threadsByActiveSpace.value[0]?.threadId ??
+        workspaceThreads.value.find((thread) => thread.spaceId === foundSpace.spaceId)?.threadId ??
+        ''
+    }
   }
 
   const setActiveThread = (threadId: string) => {
-    const thread = activeThreadCandidates.value.find((candidate) => candidate.threadId === threadId)
+    const thread = workspaceThreads.value.find((candidate) => candidate.threadId === threadId)
     if (!thread) return
+    activeSpaceId.value = thread.spaceId
     activeThreadId.value = threadId
   }
 
@@ -336,71 +330,61 @@ export const useAppStore = defineStore('app', () => {
       spaceId,
       workspaceSlug: activeWorkspace.value,
       title: nextSpaceTitle(),
-      updatedAt: 'Updated now',
+      updatedAt: touchTimestamp(),
       status: 'active',
     }
-
     spaces.value = [nextSpace, ...spaces.value]
     activeSpaceId.value = spaceId
 
     const nextThread: BrainThread = {
-      threadId: `${activeWorkspace.value}-thread-${Date.now() + 1}`,
+      threadId: `${activeWorkspace.value}-thread-${Date.now()}`,
       spaceId,
       workspaceSlug: activeWorkspace.value,
       title: 'Conversation 1',
-      updatedAt: 'Updated now',
+      updatedAt: touchTimestamp(),
       status: 'active',
       messages: [],
     }
-
     threads.value = [nextThread, ...threads.value]
     activeThreadId.value = nextThread.threadId
   }
 
-  const createThread = () => {
-    if (!activeSpace.value) return
+  const createThread = (spaceId?: string) => {
+    const targetSpace = spacesWithRoot.value.find((space) => space.spaceId === spaceId) ?? activeSpace.value
+    const targetSpaceId = targetSpace.spaceId
 
-    const threadId = `${activeWorkspace.value}-thread-${Date.now()}`
     const nextThread: BrainThread = {
-      threadId,
-      spaceId: activeSpace.value.spaceId,
+      threadId: `${activeWorkspace.value}-thread-${Date.now()}`,
+      spaceId: targetSpaceId,
       workspaceSlug: activeWorkspace.value,
-      title: nextThreadTitle(activeSpace.value.spaceId),
-      updatedAt: 'Updated now',
+      title: nextThreadTitle(targetSpaceId),
+      updatedAt: touchTimestamp(),
       status: 'active',
       messages: [],
     }
 
     threads.value = [nextThread, ...threads.value]
-    activeThreadId.value = threadId
+    activeSpaceId.value = targetSpaceId
+    activeThreadId.value = nextThread.threadId
   }
 
   const createRootThread = () => {
-    const threadId = `${activeWorkspace.value}-root-thread-${Date.now()}`
-    const nextThread: BrainThread = {
-      threadId,
-      spaceId: rootSpaceId.value,
-      workspaceSlug: activeWorkspace.value,
-      title: `Conversation ${workspaceRootThreads.value.length + 1}`,
-      updatedAt: 'Updated now',
-      status: 'active',
-      messages: [],
-    }
+    createThread(rootSpaceId.value)
+  }
 
-    threads.value = [nextThread, ...threads.value]
-    activeThreadId.value = threadId
+  const createThreadInActiveSpace = () => {
+    createThread(activeSpace.value.spaceId)
   }
 
   const renameSpace = (spaceId: string, title: string) => {
     const trimmed = title.trim()
     if (!trimmed) return
-
     spaces.value = spaces.value.map((space) =>
       space.spaceId === spaceId
         ? {
             ...space,
             title: trimmed,
-            updatedAt: 'Renamed now',
+            updatedAt: touchTimestamp(),
           }
         : space,
     )
@@ -412,37 +396,36 @@ export const useAppStore = defineStore('app', () => {
         ? {
             ...space,
             status: 'archived',
-            updatedAt: 'Archived now',
+            updatedAt: touchTimestamp(),
           }
         : space,
     )
 
-    updateThreadList((thread) =>
+    threads.value = threads.value.map((thread) =>
       thread.spaceId === spaceId && thread.status === 'active'
         ? {
             ...thread,
             status: 'archived',
-            updatedAt: 'Archived now',
+            updatedAt: touchTimestamp(),
           }
         : thread,
     )
+
+    syncSelections()
   }
 
   const deleteSpace = (spaceId: string) => {
-    const space = spaces.value.find((item) => item.spaceId === spaceId)
-    if (!space) return
-
-    spaces.value = spaces.value.map((item) =>
-      item.spaceId === spaceId
+    spaces.value = spaces.value.map((space) =>
+      space.spaceId === spaceId
         ? {
-            ...item,
+            ...space,
             status: 'deleted',
             updatedAt: 'Moved to bin',
           }
-        : item,
+        : space,
     )
 
-    updateThreadList((thread) =>
+    threads.value = threads.value.map((thread) =>
       thread.spaceId === spaceId && thread.status !== 'deleted'
         ? {
             ...thread,
@@ -458,32 +441,33 @@ export const useAppStore = defineStore('app', () => {
   const renameThread = (threadId: string, title: string) => {
     const trimmed = title.trim()
     if (!trimmed) return
-
-    updateThreadList((thread) =>
+    threads.value = threads.value.map((thread) =>
       thread.threadId === threadId
         ? {
             ...thread,
             title: trimmed,
-            updatedAt: 'Renamed now',
+            updatedAt: touchTimestamp(),
           }
         : thread,
     )
   }
 
   const archiveThread = (threadId: string) => {
-    updateThreadList((thread) =>
+    threads.value = threads.value.map((thread) =>
       thread.threadId === threadId
         ? {
             ...thread,
             status: 'archived',
-            updatedAt: 'Archived now',
+            updatedAt: touchTimestamp(),
           }
         : thread,
     )
+
+    syncSelections()
   }
 
   const deleteThread = (threadId: string) => {
-    updateThreadList((thread) =>
+    threads.value = threads.value.map((thread) =>
       thread.threadId === threadId
         ? {
             ...thread,
@@ -492,98 +476,94 @@ export const useAppStore = defineStore('app', () => {
           }
         : thread,
     )
+
+    syncSelections()
   }
 
   const restoreThread = (threadId: string) => {
-    const restored = threads.value.find((thread) => thread.threadId === threadId)
-
-    if (restored) {
-      spaces.value = spaces.value.map((space) =>
-        restored.spaceId !== rootSpaceId.value && space.spaceId === restored.spaceId && space.status !== 'active'
-          ? {
-              ...space,
-              status: 'active',
-              updatedAt: 'Restored now',
-            }
-          : space,
-      )
-    }
-
-    updateThreadList((thread) =>
+    threads.value = threads.value.map((thread) =>
       thread.threadId === threadId
         ? {
             ...thread,
             status: 'active',
-            updatedAt: 'Restored now',
+            updatedAt: touchTimestamp(),
           }
         : thread,
     )
 
-    const restoredThread = threads.value.find((thread) => thread.threadId === threadId)
-    if (restoredThread?.workspaceSlug === activeWorkspace.value) {
-      if (restoredThread.spaceId !== rootSpaceId.value) {
-        activeSpaceId.value = restoredThread.spaceId
-      }
-      activeThreadId.value = threadId
+    const restored = threads.value.find((thread) => thread.threadId === threadId)
+    if (!restored) return
+    if (restored.spaceId !== rootSpaceId.value) {
+      spaces.value = spaces.value.map((space) =>
+        space.spaceId === restored.spaceId && space.status !== 'active'
+          ? {
+              ...space,
+              status: 'active',
+              updatedAt: touchTimestamp(),
+            }
+          : space,
+      )
+      activeSpaceId.value = restored.spaceId
     }
+    activeThreadId.value = restored.threadId
   }
 
   const restoreThreads = (threadIds: string[]) => {
     if (threadIds.length === 0) return
-
-    const idSet = new Set(threadIds)
+    const set = new Set(threadIds)
     const restoredSpaceIds = new Set(
-      threads.value.filter((thread) => idSet.has(thread.threadId)).map((thread) => thread.spaceId),
+      threads.value.filter((thread) => set.has(thread.threadId)).map((thread) => thread.spaceId),
     )
-
+    threads.value = threads.value.map((thread) =>
+      set.has(thread.threadId)
+        ? {
+            ...thread,
+            status: 'active',
+            updatedAt: touchTimestamp(),
+          }
+        : thread,
+    )
     spaces.value = spaces.value.map((space) =>
-      restoredSpaceIds.has(space.spaceId) &&
-      space.spaceId !== rootSpaceId.value &&
-      space.status !== 'active'
+      restoredSpaceIds.has(space.spaceId) && space.status !== 'active'
         ? {
             ...space,
             status: 'active',
-            updatedAt: 'Restored now',
+            updatedAt: touchTimestamp(),
           }
         : space,
     )
 
-    updateThreadList((thread) =>
-      idSet.has(thread.threadId)
-        ? {
-            ...thread,
-            status: 'active',
-            updatedAt: 'Restored now',
-          }
-        : thread,
-    )
-
-    const restored = threads.value.find(
-      (thread) => idSet.has(thread.threadId) && thread.workspaceSlug === activeWorkspace.value,
-    )
-
-    if (restored) {
-      if (restored.spaceId !== rootSpaceId.value) {
-        activeSpaceId.value = restored.spaceId
+    const restoredThread = threads.value.find((thread) => set.has(thread.threadId) && thread.workspaceSlug === activeWorkspace.value)
+    if (restoredThread) {
+      if (restoredThread.spaceId !== rootSpaceId.value) {
+        activeSpaceId.value = restoredThread.spaceId
       }
-      activeThreadId.value = restored.threadId
+      activeThreadId.value = restoredThread.threadId
     }
   }
 
+  const clearDeletedThreads = (threadIds?: string[]) => {
+    const targetIds = threadIds?.length ? new Set(threadIds) : new Set(deletedThreads.value.map((thread) => thread.threadId))
+    if (targetIds.size === 0) return
+
+    threads.value = threads.value.filter((thread) => thread.status !== 'deleted' || !targetIds.has(thread.threadId))
+    syncSelections()
+  }
+
   const archiveWorkspaceThreads = () => {
-    updateThreadList((thread) =>
+    threads.value = threads.value.map((thread) =>
       thread.workspaceSlug === activeWorkspace.value && thread.status === 'active'
         ? {
             ...thread,
             status: 'archived',
-            updatedAt: 'Archived now',
+            updatedAt: touchTimestamp(),
           }
         : thread,
     )
   }
 
   const deleteWorkspaceThreads = () => {
-    updateThreadList((thread) =>
+    threads.value = threads.value.map((thread) =>
       thread.workspaceSlug === activeWorkspace.value && thread.status === 'active'
         ? {
             ...thread,
@@ -592,19 +572,42 @@ export const useAppStore = defineStore('app', () => {
           }
         : thread,
     )
+    syncSelections()
   }
 
-  const clearDeletedThreads = (threadIds?: string[]) => {
-    const targetIds = threadIds?.length
-      ? new Set(threadIds)
-      : new Set(deletedThreads.value.map((thread) => thread.threadId))
-
-    if (targetIds.size === 0) return
-
-    threads.value = threads.value.filter(
-      (thread) => thread.status !== 'deleted' || !targetIds.has(thread.threadId),
+  const addMessageToThread = (threadId: string, role: BrainMessage['role'], text: string, loading = false) => {
+    const message = emptyMessage(role, text, loading)
+    threads.value = threads.value.map((thread) =>
+      thread.threadId === threadId
+        ? {
+            ...thread,
+            updatedAt: touchTimestamp(),
+            messages: [...thread.messages, message],
+          }
+        : thread,
     )
-    syncSelections()
+    if (threadId === activeThreadId.value && threadId !== '') {
+      activeThreadId.value = threadId
+    }
+    return message.id
+  }
+
+  const updateMessage = (threadId: string, messageId: string, text: string, loading = false) => {
+    threads.value = threads.value.map((thread) =>
+      thread.threadId === threadId
+        ? {
+            ...thread,
+            messages: thread.messages.map((message) =>
+              message.id === messageId ? { ...message, text, loading } : message,
+            ),
+          }
+        : thread,
+    )
+  }
+
+  const toggleSidebarCollapsed = () => {
+    sidebarCollapsed.value = !sidebarCollapsed.value
+    closeSurfaceMenus()
   }
 
   const toggleWorkspaceMenu = () => {
@@ -613,15 +616,6 @@ export const useAppStore = defineStore('app', () => {
 
   const toggleBrainSources = () => {
     brainSourcesOpen.value = !brainSourcesOpen.value
-  }
-
-  const applyTheme = (nextTheme: ThemeMode, nextPreset: ThemePreset = themePreset.value) => {
-    const root = document.documentElement
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    const resolvedTheme = nextTheme === 'system' ? (prefersDark ? 'dark' : 'light') : nextTheme
-    root.dataset.theme = resolvedTheme
-    root.dataset.themePreset = nextPreset
-    root.style.colorScheme = resolvedTheme
   }
 
   const systemThemeMedia = window.matchMedia('(prefers-color-scheme: dark)')
@@ -648,20 +642,21 @@ export const useAppStore = defineStore('app', () => {
     applyTheme(theme.value, nextPreset)
   }, { immediate: true })
 
-  watch(activeWorkspace, (workspace) => {
-    localStorage.setItem(WORKSPACE_KEY, workspace)
+  watch(activeWorkspace, () => {
+    localStorage.setItem(WORKSPACE_KEY, activeWorkspace.value)
+    syncSelections()
   }, { immediate: true })
 
   watch(activeThreadId, (threadId) => {
     localStorage.setItem(THREAD_KEY, threadId)
   }, { immediate: true })
 
-  watch(sidebarCollapsed, (collapsed) => {
-    localStorage.setItem(SIDEBAR_KEY, String(collapsed))
-  }, { immediate: true })
-
   watch(activeSpaceId, (spaceId) => {
     localStorage.setItem(SPACE_KEY, spaceId)
+  }, { immediate: true })
+
+  watch(sidebarCollapsed, (collapsed) => {
+    localStorage.setItem(SIDEBAR_KEY, String(collapsed))
   }, { immediate: true })
 
   watch(threads, (nextThreads) => {
@@ -685,16 +680,18 @@ export const useAppStore = defineStore('app', () => {
     threads,
     activeSpaceId,
     activeThreadId,
+    rootSpaceId,
+    rootSpace,
     availableSpaces,
+    spacesWithRoot,
     activeSpace,
-    availableThreads,
+    threadsByActiveSpace,
+    workspaceThreads,
     workspaceRootThreads,
     workspaceActiveThreads,
     archivedThreads,
     deletedThreads,
     activeThread,
-    activeThreadCandidates,
-    rootSpaceId,
     setTheme,
     setThemePreset,
     setWorkspace,
@@ -702,6 +699,7 @@ export const useAppStore = defineStore('app', () => {
     setActiveThread,
     createSpace,
     createThread,
+    createThreadInActiveSpace,
     createRootThread,
     renameSpace,
     archiveSpace,
@@ -714,6 +712,8 @@ export const useAppStore = defineStore('app', () => {
     archiveWorkspaceThreads,
     deleteWorkspaceThreads,
     clearDeletedThreads,
+    addMessageToThread,
+    updateMessage,
     toggleWorkspaceMenu,
     toggleSidebarCollapsed,
     closeWorkspaceMenu,

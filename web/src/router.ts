@@ -36,8 +36,8 @@ export const router = createRouter({
           name: 'brain',
           component: BrainPage,
           meta: {
-            pageTitle: 'Isomo Brain',
-            pageEyebrow: 'Workspace assistant',
+            pageTitle: 'Spaces',
+            pageEyebrow: 'AI workspace',
           },
         },
         {

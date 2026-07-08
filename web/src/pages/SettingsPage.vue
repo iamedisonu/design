@@ -1,9 +1,9 @@
 <template>
   <div class="page-grid">
-    <PageSection
+  <PageSection
       eyebrow="Account and appearance"
       title="Settings"
-      description="Theme, profile, and Isomo Brain history controls live here."
+      description="Theme, profile, and Spaces history controls live here."
     >
       <div class="settings-grid">
         <section class="settings-card">
@@ -33,7 +33,7 @@
           <div class="settings-actions-row">
             <RouterLink class="surface-button" to="/isomo-brain">
               <MessageSquareMore :size="16" />
-              <span>Open Isomo Brain</span>
+              <span>Open Spaces</span>
             </RouterLink>
             <button class="surface-button destructive-button" type="button" @click="logout">
               <LogOut :size="16" />
@@ -97,7 +97,7 @@
     </PageSection>
 
     <PageSection
-      eyebrow="Brain history"
+      eyebrow="Spaces history"
       title="Chat history controls"
       description="Manage active chats in this workspace and review archived conversations or items in bin."
     >
@@ -141,7 +141,7 @@
             <article v-if="appStore.workspaceActiveThreads.length === 0" class="history-record empty">
               <div class="history-record-copy">
                 <strong>No active chats</strong>
-                <small>Start a new chat in Isomo Brain or restore one below.</small>
+                <small>Start a new chat in Spaces or restore one below.</small>
               </div>
             </article>
           </div>

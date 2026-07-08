@@ -64,28 +64,11 @@
           </div>
         </div>
 
-        <RouterLink class="ai-sidebar-link" active-class="active" to="/isomo-brain" title="Isomo Brain" @click="closeSurfaceMenus">
-          <BrainCircuit :size="18" />
-          <span>Isomo Brain</span>
-        </RouterLink>
-
         <button class="ai-sidebar-link" type="button" title="Spaces" @click="goBrain">
           <FolderKanban :size="18" />
           <span>Spaces</span>
         </button>
-
-        <RouterLink class="ai-sidebar-link" active-class="active" to="/settings" title="Settings" @click="closeSurfaceMenus">
-          <SlidersHorizontal :size="18" />
-          <span>Customize</span>
-        </RouterLink>
       </nav>
-
-      <div class="ai-sidebar-muted-links">
-        <span>Connectors</span>
-        <span>Skills</span>
-        <span>Workflows</span>
-        <span>Memory</span>
-      </div>
 
       <section class="ai-history-panel">
         <div class="ai-history-heading">
@@ -106,17 +89,25 @@
       </section>
 
       <div class="sidebar-footer ai-footer">
-        <RouterLink class="ai-profile-link" to="/settings" title="John Doe" @click="closeSurfaceMenus">
+        <button class="ai-profile-trigger" type="button" title="Profile menu" @click.stop="toggleProfileMenu">
           <span class="account-avatar">JD</span>
           <span class="account-copy">
             <strong>John Doe</strong>
             <small>Signed in</small>
           </span>
-        </RouterLink>
+          <ChevronDown :size="15" />
+        </button>
 
-        <RouterLink class="icon-button footer-icon-button settings-icon-button" to="/settings" title="Settings" @click="closeSurfaceMenus">
-          <Settings2 :size="18" />
-        </RouterLink>
+        <div v-if="profileMenuOpen" class="profile-menu" @click.stop>
+          <RouterLink class="profile-menu-item" to="/settings" @click="closeProfileMenu">
+            <Settings2 :size="15" />
+            <span>Settings</span>
+          </RouterLink>
+          <button class="profile-menu-item" type="button" @click="logout">
+            <ShieldAlert :size="15" />
+            <span>Sign out</span>
+          </button>
+        </div>
       </div>
     </aside>
 
@@ -148,7 +139,6 @@
 
 <script setup lang="ts">
 import {
-  BrainCircuit,
   Check,
   ChevronsUpDown,
   FolderKanban,
@@ -159,11 +149,11 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
+  ChevronDown,
   Settings2,
   ShieldAlert,
-  SlidersHorizontal,
 } from '@lucide/vue'
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import {
   programmeNav,
@@ -175,6 +165,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const appStore = useAppStore()
+const profileMenuOpen = ref(false)
 
 const navIcons = {
   overview: LayoutDashboard,
@@ -218,7 +209,7 @@ const goBrain = () => {
 }
 
 const createNewBrainChat = () => {
-  appStore.createRootThread()
+  appStore.createThread()
   closeSurfaceMenus()
   void router.push('/isomo-brain')
 }
@@ -244,7 +235,21 @@ const toggleSidebarCollapsed = () => {
   appStore.toggleSidebarCollapsed()
 }
 
+const toggleProfileMenu = () => {
+  profileMenuOpen.value = !profileMenuOpen.value
+}
+
+const closeProfileMenu = () => {
+  profileMenuOpen.value = false
+}
+
+const logout = () => {
+  closeProfileMenu()
+  void router.push('/login')
+}
+
 const closeSurfaceMenus = () => {
+  closeProfileMenu()
   appStore.closeSurfaceMenus()
 }
 

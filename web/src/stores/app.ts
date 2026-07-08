@@ -36,7 +36,7 @@ export type BrainThread = {
 }
 
 export const workspaces: Workspace[] = [
-  { slug: 'circles', label: 'Isomo Circles', enabled: true, statusLabel: 'Available now' },
+  { slug: 'circles', label: 'Isomo', enabled: true, statusLabel: 'Available now' },
   { slug: 'academy', label: 'Academy', enabled: false, statusLabel: 'Coming soon' },
   { slug: 'iris', label: 'IRIS', enabled: false, statusLabel: 'Coming soon' },
   { slug: 'graduate', label: 'Graduate', enabled: false, statusLabel: 'Coming soon' },

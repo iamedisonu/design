@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Isomo Frontend Handoff</title>
+  <style>
+    :root {
+      --green: #8cc63d;
+      --green-dark: #5d8f20;
+      --blue: #1dafec;
+      --blue-dark: #167aa3;
+      --ink: #303030;
+      --text: #111827;
+      --muted: #54595f;
+      --line: #ededed;
+      --surface: #ffffff;
+      --soft: #f8f8f8;
+      --soft-green: #f3fae8;
+      --soft-blue: #eaf8fe;
+      --soft-orange: #fff8ec;
+      --orange: #efb34a;
+      --shadow: 0 18px 48px rgba(17, 24, 39, 0.08);
+      --shadow-soft: 0 10px 28px rgba(17, 24, 39, 0.06);
+      --radius: 8px;
+      --max: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(180deg, #f9fbfd 0, #ffffff 320px),
+        #ffffff;
+      color: var(--text);
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.55;
+    }
+
+    a {
+      color: var(--blue-dark);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .page {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 28px 24px 72px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 0 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, var(--green) 0 48%, var(--blue) 49% 100%);
+      box-shadow: var(--shadow-soft);
+      flex: 0 0 auto;
+    }
+
+    .brand strong {
+      display: block;
+      color: var(--ink);
+      font-size: 15px;
+      letter-spacing: 0.01em;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--ink);
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(17, 24, 39, 0.04);
+    }
+
+    .button.primary {
+      border-color: transparent;
+      background: var(--green);
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+      gap: 24px;
+      align-items: stretch;
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background:
+        linear-gradient(135deg, rgba(140, 198, 61, 0.1), rgba(29, 175, 236, 0.08)),
+        #ffffff;
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 14px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--soft-green);
+      color: var(--green-dark);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 790px;
+      color: var(--ink);
+      font-size: clamp(34px, 4.8vw, 58px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .hero-copy {
+      max-width: 76ch;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .hero-copy strong {
+      color: var(--ink);
+    }
+
+    .hero-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 20px;
+      border: 1px solid rgba(29, 175, 236, 0.18);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .hero-panel h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: var(--ink);
+    }
+
+    .signal-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .signal-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 7px;
+      border-radius: 99px;
+      background: var(--blue);
+      flex: 0 0 auto;
+    }
+
+    .dot.green {
+      background: var(--green);
+    }
+
+    .dot.orange {
+      background: var(--orange);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0 0;
+    }
+
+    .meta-card {
+      min-height: 104px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+      box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+    }
+
+    .meta-card .label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+    }
+
+    .meta-card .value {
+      margin-top: 6px;
+      color: var(--ink);
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .meta-card .note {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 24px;
+      margin-top: 28px;
+      align-items: start;
+    }
+
+    .nav {
+      position: sticky;
+      top: 16px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .nav h2 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .nav a {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: var(--ink);
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .nav a:hover {
+      background: var(--soft-blue);
+      color: var(--blue-dark);
+    }
+
+    section {
+      margin-bottom: 34px;
+      padding: 26px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow: 0 10px 30px rgba(17, 24, 39, 0.045);
+    }
+
+    section > h2 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 8px;
+      color: var(--ink);
+      font-size: 25px;
+      line-height: 1.15;
+    }
+
+    section > p.lede {
+      max-width: 84ch;
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .num {
+      display: inline-grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: var(--blue-dark);
+      font-size: 13px;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid.four {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+    }
+
+    .card.soft {
+      background: var(--soft);
+    }
+
+    .card.blue {
+      border-color: rgba(29, 175, 236, 0.22);
+      background: var(--soft-blue);
+    }
+
+    .card.green {
+      border-color: rgba(140, 198, 61, 0.24);
+      background: var(--soft-green);
+    }
+
+    .card.orange {
+      border-color: rgba(239, 179, 74, 0.28);
+      background: var(--soft-orange);
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      color: var(--ink);
+      font-size: 16px;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card li {
+      margin: 5px 0;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      background: var(--soft-green);
+      color: var(--green-dark);
+    }
+
+    .tag.blue {
+      background: var(--soft-blue);
+      color: var(--blue-dark);
+    }
+
+    .tag.orange {
+      background: var(--soft-orange);
+      color: #98680d;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .flow-step {
+      position: relative;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+      min-height: 130px;
+    }
+
+    .flow-step:not(:last-child)::after {
+      content: ">";
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      z-index: 1;
+    }
+
+    .flow-step .kicker {
+      color: var(--blue-dark);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .flow-step h3 {
+      margin: 6px 0;
+      font-size: 16px;
+      color: var(--ink);
+    }
+
+    .flow-step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr) 150px;
+      gap: 16px;
+      align-items: start;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+    }
+
+    .phase.current {
+      border-color: rgba(140, 198, 61, 0.45);
+      background: linear-gradient(90deg, var(--soft-green), #ffffff 54%);
+    }
+
+    .phase .phase-id {
+      color: var(--blue-dark);
+      font-weight: 900;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .phase h3 {
+      margin: 0 0 5px;
+      color: var(--ink);
+      font-size: 16px;
+    }
+
+    .phase p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status {
+      justify-self: end;
+      display: inline-flex;
+      justify-content: center;
+      min-width: 110px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--green-dark);
+      background: var(--soft-green);
+    }
+
+    .status.later {
+      color: var(--muted);
+      background: var(--soft);
+    }
+
+    .screen-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .screen-card {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 14px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+      min-height: 148px;
+    }
+
+    .screen-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: var(--soft-blue);
+      color: var(--blue-dark);
+      font-weight: 900;
+      font-size: 15px;
+    }
+
+    .screen-card:nth-child(3n) .screen-icon,
+    .screen-card:nth-child(4n) .screen-icon {
+      background: var(--soft-green);
+      color: var(--green-dark);
+    }
+
+    .screen-card h3 {
+      margin: 0 0 4px;
+      color: var(--ink);
+      font-size: 16px;
+    }
+
+    .screen-card p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .screen-card .mini {
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 9px;
+    }
+
+    .wireframe-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 14px;
+      margin: 16px 0 18px;
+    }
+
+    .wireframe-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #ffffff;
+    }
+
+    .wireframe-card h3 {
+      margin: 0 0 10px;
+      color: var(--ink);
+      font-size: 16px;
+    }
+
+    .wireframe-shell {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      min-height: 286px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fafafa;
+    }
+
+    .wireframe-sidebar {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      padding: 12px;
+      border-right: 1px solid var(--line);
+      background: var(--soft);
+    }
+
+    .wireframe-main {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .wireframe-top,
+    .wireframe-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 110px;
+      gap: 10px;
+    }
+
+    .wireframe-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .wireframe-kpi,
+    .wireframe-panel,
+    .wireframe-list {
+      border: 1px dashed #d8dde5;
+      border-radius: var(--radius);
+      background: #ffffff;
+      padding: 10px;
+    }
+
+    .wireframe-kpi {
+      min-height: 72px;
+    }
+
+    .wireframe-panel {
+      min-height: 120px;
+    }
+
+    .wireframe-list {
+      min-height: 254px;
+      display: grid;
+      align-content: start;
+      gap: 9px;
+    }
+
+    .wire {
+      display: block;
+      height: 11px;
+      border-radius: 999px;
+      background: #d8dde5;
+    }
+
+    .wire.short {
+      width: 44%;
+    }
+
+    .wire.medium {
+      width: 68%;
+    }
+
+    .wire.long {
+      width: 88%;
+    }
+
+    .wire.tall {
+      height: 44px;
+      border-radius: 8px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: #ffffff;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code,
+    pre {
+      font-family: "SF Mono", Consolas, Menlo, monospace;
+    }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: #f4f7fa;
+      color: #1f2937;
+      font-size: 0.92em;
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #101827;
+      color: #e5edf7;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .code-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .swatch {
+      min-height: 96px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .swatch .color {
+      height: 48px;
+    }
+
+    .swatch .body {
+      padding: 9px;
+    }
+
+    .swatch strong {
+      display: block;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .swatch span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .do-dont {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .checklist {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 9px;
+    }
+
+    .checklist li {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .check {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      margin-top: 2px;
+      color: #ffffff;
+      background: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .x {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      margin-top: 2px;
+      color: #ffffff;
+      background: #6b7280;
+      font-size: 12px;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .footer-note {
+      margin-top: 28px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .layout,
+      .meta-grid,
+      .grid.two,
+      .grid.three,
+      .grid.four,
+      .flow,
+      .screen-grid,
+      .wireframe-grid,
+      .code-grid,
+      .swatches,
+      .do-dont {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        position: static;
+      }
+
+      .phase {
+        grid-template-columns: 1fr;
+      }
+
+      .status {
+        justify-self: start;
+      }
+
+      .wireframe-shell,
+      .wireframe-top,
+      .wireframe-row,
+      .wireframe-kpis {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-step:not(:last-child)::after {
+        content: "v";
+        right: 16px;
+        top: auto;
+        bottom: -10px;
+        transform: none;
+      }
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+
+      .page {
+        max-width: none;
+        padding: 0;
+      }
+
+      .topbar,
+      .nav,
+      .actions {
+        display: none;
+      }
+
+      .hero,
+      section,
+      .card,
+      .screen-card,
+      .phase,
+      .flow-step {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      section {
+        margin-bottom: 18px;
+      }
+
+      .print-only {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true"></div>
+        <div>
+          <strong>Isomo Frontend Handoff</strong>
+          <span>Current Vue frontend for review</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="button" onclick="window.print()">Print or Save PDF</button>
+        <a class="button primary" href="#done">Current Scope</a>
+      </div>
+    </header>
+
+    <main class="hero">
+      <div>
+        <div class="eyebrow">Current Frontend Handoff</div>
+        <h1>One Isomo frontend, three pages, and a cleaner workspace shell.</h1>
+        <p class="hero-copy">
+          This document now matches the current frontend build. It is a Vue 3, frontend-only experience with a shared shell, workspace switcher, Overview, Data Health, settings, space management, archive/bin actions, and cleaner chat evidence. There are no backend endpoints connected in this branch.
+        </p>
+        <div class="meta-grid">
+          <div class="meta-card">
+            <div class="label">Frontend</div>
+            <div class="value">Vue 3</div>
+            <div class="note">Vite, routed UI, local demo state</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">First Workspace</div>
+            <div class="value">Circles</div>
+            <div class="note">Workspace shown in the current build</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Build Mode</div>
+            <div class="value">Frontend-only</div>
+            <div class="note">No backend endpoints wired yet</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">Current State</div>
+            <div class="value">Ready</div>
+            <div class="note">Updated for boss review and sharing</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="hero-panel" aria-label="Executive summary">
+        <div>
+          <h2>Executive Summary</h2>
+          <ul class="signal-list">
+            <li><span class="dot green"></span><span>The current shell includes the logo, workspace switcher, left navigation, spaces, chat menus, settings, archive, and bin actions.</span></li>
+            <li><span class="dot"></span><span>Overview has been simplified to two stable cards: total students in program and schools.</span></li>
+            <li><span class="dot orange"></span><span>Data Health is now a clean summary page with four small cards, a short feed list, and compact checks.</span></li>
+          </ul>
+        </div>
+        <div class="tag-row">
+          <span class="tag green">Current build</span>
+          <span class="tag blue">Vue 3</span>
+          <span class="tag orange">Frontend only</span>
+        </div>
+      </aside>
+    </main>
+
+    <div class="layout">
+      <nav class="nav" aria-label="Plan sections">
+        <h2>Plan Sections</h2>
+        <a href="#direction">1. Direction</a>
+        <a href="#adjustments">2. Adjustments</a>
+        <a href="#shape">3. Product Shape</a>
+        <a href="#roadmap">4. Current State</a>
+        <a href="#screens">5. Screen Plan</a>
+        <a href="#contracts">6. API Contracts</a>
+        <a href="#vue">7. Vue.js Guidance</a>
+        <a href="#brain">8. Isomo Brain</a>
+        <a href="#design">9. Visual Direction</a>
+        <a href="#rules">10. Rules</a>
+        <a href="#done">11. Current Scope</a>
+      </nav>
+
+      <div>
+        <section id="direction">
+          <h2><span class="num">1</span> Direction</h2>
+          <p class="lede">
+            The frontend now presents Isomo as a clean workspace app with the logo in the shell, Circles as the active workspace, and a small set of pages that feel easy to scan.
+          </p>
+          <div class="grid three">
+            <div class="card green">
+              <h3>Keep one shell</h3>
+              <p>Use the shared sidebar, top bar, and workspace switcher across the whole app.</p>
+            </div>
+            <div class="card blue">
+              <h3>Keep the pages simple</h3>
+              <p>Overview and Data Health now show small, focused cards instead of dense dashboards.</p>
+            </div>
+            <div class="card orange">
+              <h3>Protect clarity</h3>
+              <p>Spaces, archive, bin, settings, and evidence all stay visible without crowding the page.</p>
+            </div>
+          </div>
+          <div class="tag-row">
+            <span class="tag green">Shared shell</span>
+            <span class="tag blue">Circles first</span>
+            <span class="tag">Simple metrics</span>
+            <span class="tag">Clean status views</span>
+          </div>
+        </section>
+
+        <section id="adjustments">
+          <h2><span class="num">2</span> Key Adjustments</h2>
+          <p class="lede">
+            These are the main updates that brought the frontend into its current shape.
+          </p>
+          <div class="grid two">
+            <div class="card">
+              <h3>Workspace names and icons</h3>
+              <p>The spaces now use icons and the current workspace names are Circles, Graduate, IRS, and Academy.</p>
+            </div>
+            <div class="card">
+              <h3>Overview stayed minimal</h3>
+              <p>Overview now only shows the two main numbers the user needs: students in program and schools.</p>
+            </div>
+            <div class="card">
+              <h3>Data Health was simplified</h3>
+              <p>The page now uses a small metric row and short lists instead of a crowded operational dashboard.</p>
+            </div>
+            <div class="card">
+              <h3>No backend coupling</h3>
+              <p>The current frontend stays local and frontend-only while the backend work remains separate.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="shape">
+          <h2><span class="num">3</span> Product Shape</h2>
+          <p class="lede">
+            The experience now feels like one Isomo product with a shared shell, workspace switcher, chat surface, settings, and a compact data health area.
+          </p>
+          <div class="flow">
+            <div class="flow-step">
+              <div class="kicker">Step 1</div>
+              <h3>Choose workspace</h3>
+              <p>Switch between Circles, Graduate, IRS, and Academy from the sidebar.</p>
+            </div>
+            <div class="flow-step">
+              <div class="kicker">Step 2</div>
+              <h3>Scan the dashboard</h3>
+              <p>Overview shows only the two most useful counts: students and schools.</p>
+            </div>
+            <div class="flow-step">
+              <div class="kicker">Step 3</div>
+              <h3>Open the data view</h3>
+              <p>Data Health shows source status, small summary cards, and a short checks list.</p>
+            </div>
+            <div class="flow-step">
+              <div class="kicker">Step 4</div>
+              <h3>Use the actions</h3>
+              <p>Chat menus, archive, bin, evidence, and settings are all available from the shell.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="roadmap">
+          <h2><span class="num">4</span> Current State</h2>
+          <p class="lede">
+            This is the current frontend shape after the latest rounds of cleanup and simplification.
+          </p>
+          <div class="timeline">
+            <div class="phase current">
+              <div class="phase-id">Shell</div>
+              <div>
+                <h3>Shared app frame</h3>
+                <p>Logo, workspace switcher, side navigation, chat list, space icons, settings entry, archive, and bin all live in one consistent shell.</p>
+              </div>
+              <span class="status">Current</span>
+            </div>
+            <div class="phase">
+              <div class="phase-id">Overview</div>
+              <div>
+                <h3>Two-card summary</h3>
+                <p>Overview now shows only total students in program and schools so the page stays clean and useful.</p>
+              </div>
+              <span class="status later">Done</span>
+            </div>
+            <div class="phase">
+              <div class="phase-id">Data Health</div>
+              <div>
+                <h3>Simple health view</h3>
+                <p>The page uses compact metric cards, key feeds, and short checks so it remains readable in light mode.</p>
+              </div>
+              <span class="status later">Done</span>
+            </div>
+            <div class="phase">
+              <div class="phase-id">Settings</div>
+              <div>
+                <h3>Theme and workspace controls</h3>
+                <p>The settings area now uses smaller modern controls, plates for color choices, and clearer workspace options.</p>
+              </div>
+              <span class="status later">Updated</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="screens">
+          <h2><span class="num">5</span> Screen Plan</h2>
+          <p class="lede">
+            These are the screens and shell areas that exist in the current frontend. They are intentionally simple so the app stays easy to scan.
+          </p>
+          <div class="card orange" style="margin-bottom:14px">
+            <h3>Current rule: show clarity, not clutter</h3>
+            <p>The current build uses real UI states, but the pages stay compact: two overview cards, a small Data Health view, short source/check lists, and lightweight settings.</p>
+          </div>
+          <div class="table-wrap" style="margin-bottom:14px">
+            <table>
+              <thead>
+                <tr>
+                  <th>Page / App Module</th>
+                  <th>Route / Entry</th>
+                  <th>What It Shows Now</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Workspace</td>
+                  <td>/</td>
+                  <td>Shared shell, workspace switcher, side navigation, spaces, chat history, and top bar context.</td>
+                </tr>
+                <tr>
+                  <td>Overview</td>
+                  <td>/overview</td>
+                  <td>Two cards only: total students in program and schools, with workspace-specific values.</td>
+                </tr>
+                <tr>
+                  <td>Data Health</td>
+                  <td>/data-health</td>
+                  <td>Compact summary cards, key feeds list, and a short latest-checks list.</td>
+                </tr>
+                <tr>
+                  <td>Settings</td>
+                  <td>Modal from shell</td>
+                  <td>Theme mode, workspace look plates, workspace names, archive/bin entry points, and account actions.</td>
+                </tr>
+                <tr>
+                  <td>Space menus</td>
+                  <td>Three-dot menus</td>
+                  <td>Rename, pin, archive, and move to bin for chats; settings and delete for spaces.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="screen-grid">
+            <article class="screen-card">
+              <div class="screen-icon">01</div>
+              <div>
+                <h3>Workspace shell</h3>
+                <p>Logo, workspace switcher, navigation, spaces, settings access, archive/bin entry points, and clean page framing.</p>
+                <div class="mini">The shell is the main home for everything else in the app.</div>
+              </div>
+            </article>
+            <article class="screen-card">
+              <div class="screen-icon">02</div>
+              <div>
+                <h3>Chat area</h3>
+                <p>Conversation list, message thread, composer, evidence box, and context-aware chat menus.</p>
+                <div class="mini">Evidence is intentionally compact so answers stay readable.</div>
+              </div>
+            </article>
+            <article class="screen-card">
+              <div class="screen-icon">03</div>
+              <div>
+                <h3>Overview</h3>
+                <p>Two simple cards for total students in program and schools, with workspace-specific values.</p>
+                <div class="mini">This keeps the dashboard fast to read and easy to print to a boss.</div>
+              </div>
+            </article>
+            <article class="screen-card">
+              <div class="screen-icon">04</div>
+              <div>
+                <h3>Data Health</h3>
+                <p>Small summary cards, a short feed list, and a few quick checks for source reliability and freshness.</p>
+                <div class="mini">The goal is useful status without the overload.</div>
+              </div>
+            </article>
+            <article class="screen-card">
+              <div class="screen-icon">05</div>
+              <div>
+                <h3>Settings</h3>
+                <p>Theme modes, look plates, workspace choices, and account actions in a cleaner, smaller layout.</p>
+                <div class="mini">The settings UI now makes the important choices feel obvious.</div>
+              </div>
+            </article>
+            <article class="screen-card">
+              <div class="screen-icon">06</div>
+              <div>
+                <h3>Space actions</h3>
+                <p>Menu actions for chats and spaces, including archive, bin, pin, rename, and confirmation for risky bulk actions.</p>
+                <div class="mini">This is where the day-to-day workspace control lives.</div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="contracts">
+          <h2><span class="num">6</span> Data And Contract Notes</h2>
+          <p class="lede">
+            The current frontend is self-contained. It does not call backend endpoints, and it does not depend on any hidden data model to render the UI you see now.
+          </p>
+          <div class="grid two" style="margin-bottom:14px">
+            <div class="card blue">
+              <h3>What is shown visually</h3>
+              <ul>
+                <li>Workspace names: Circles, Graduate, IRS, Academy.</li>
+                <li>Space icons on the sidebar and settings icon for workspace configuration.</li>
+                <li>Chat menus with pin, rename, archive, and bin actions.</li>
+                <li>Evidence shown as a small card inside assistant answers.</li>
+              </ul>
+            </div>
+            <div class="card green">
+              <h3>What is not in this frontend</h3>
+              <ul>
+                <li>No backend endpoints.</li>
+                <li>No identity review screen.</li>
+                <li>No access model or role UI.</li>
+                <li>No login flow in the current build.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="card blue">
+            <h3>Evidence note</h3>
+            <p>Evidence is displayed visually in a compact box so chat answers can show the source context without taking over the page. It is presentational in this frontend-only build.</p>
+          </div>
+        </section>
+
+        <section id="vue">
+          <h2><span class="num">7</span> Vue.js Implementation</h2>
+          <p class="lede">
+            The app uses Vue 3 with a lightweight local state approach. The goal is clean, maintainable frontend code rather than a heavy framework stack.
+          </p>
+          <div class="grid two">
+            <div class="card">
+              <h3>Current stack</h3>
+              <ul>
+                <li>Vue 3</li>
+                <li>Vue Router</li>
+                <li>Vite</li>
+                <li>Local reactive state module</li>
+                <li>Single shared stylesheet</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Current files</h3>
+              <pre><code>frontend/src/pages/HomePage.vue
+frontend/src/pages/OverviewPage.vue
+frontend/src/pages/DataHealthPage.vue
+frontend/src/components/AppShell.vue
+frontend/src/components/ModalRoot.vue
+frontend/src/state/appState.js
+frontend/style.css</code></pre>
+            </div>
+          </div>
+          <div class="card blue" style="margin-top:14px">
+            <h3>Core UI pieces</h3>
+            <div class="tag-row">
+              <span class="tag">AppShell</span>
+              <span class="tag">Workspace switcher</span>
+              <span class="tag">Overview cards</span>
+              <span class="tag">Data Health cards</span>
+              <span class="tag">Settings modal</span>
+              <span class="tag">Space menu</span>
+              <span class="tag">Archive / Bin</span>
+              <span class="tag">Evidence box</span>
+              <span class="tag">Theme plates</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="brain">
+          <h2><span class="num">8</span> Chat And Evidence</h2>
+          <p class="lede">
+            The chat view now behaves like a focused working area: message thread, composer, evidence box, and context-aware menu actions. The evidence block is small on purpose so it supports the answer instead of crowding it.
+          </p>
+          <div class="grid two" style="margin-bottom:14px">
+            <div class="card blue">
+              <h3>Chat experience</h3>
+              <p>Users can open chats from spaces, create a new untitled chat, rename it after the first prompt, and keep the current workspace in view.</p>
+            </div>
+            <div class="card orange">
+              <h3>Evidence style</h3>
+              <p>Evidence is rendered as a compact bordered box with rows for source context so the answer stays readable and visually calm.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="design">
+          <h2><span class="num">9</span> Visual Direction</h2>
+          <p class="lede">
+            The UI is tuned to be calmer in light mode and still readable in dark mode. Colors are used as plates and status cues, not decoration.
+          </p>
+          <div class="swatches">
+            <div class="swatch">
+              <div class="color" style="background:#8cc63d"></div>
+              <div class="body"><strong>Green</strong><span>#8CC63D<br>Primary actions, success, confirmed records.</span></div>
+            </div>
+            <div class="swatch">
+              <div class="color" style="background:#1dafec"></div>
+              <div class="body"><strong>Blue</strong><span>#1DAFEC<br>Links, active states, and information.</span></div>
+            </div>
+            <div class="swatch">
+              <div class="color" style="background:#303030"></div>
+              <div class="body"><strong>Dark</strong><span>#303030<br>Headings and strong contrast text.</span></div>
+            </div>
+            <div class="swatch">
+              <div class="color" style="background:#54595f"></div>
+              <div class="body"><strong>Muted</strong><span>#54595F<br>Secondary text and metadata.</span></div>
+            </div>
+            <div class="swatch">
+              <div class="color" style="background:#ededed"></div>
+              <div class="body"><strong>Border</strong><span>#EDEDED<br>Lines, separators, and quiet structure.</span></div>
+            </div>
+          </div>
+          <div class="grid three" style="margin-top:14px">
+            <div class="card green">
+              <h3>Simple cards</h3>
+              <p>Overview and Data Health use small cards with enough detail to be useful and no more.</p>
+            </div>
+            <div class="card blue">
+              <h3>Workspace colors</h3>
+              <p>Settings includes color plates and look options so the interface can feel different without becoming busy.</p>
+            </div>
+            <div class="card orange">
+              <h3>Readable light mode</h3>
+              <p>The white theme is softened so content stays visible without harsh brightness.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="rules">
+          <h2><span class="num">10</span> Rules And Guardrails</h2>
+          <p class="lede">
+            These are the rules that keep the frontend honest and easy to maintain.
+          </p>
+          <div class="do-dont">
+            <div class="card green">
+              <h3>Do</h3>
+              <ul class="checklist">
+                <li><span class="check">+</span><span>Keep the UI compact and readable.</span></li>
+                <li><span class="check">+</span><span>Use workspace names, icons, and color plates consistently.</span></li>
+                <li><span class="check">+</span><span>Show evidence visually without overwhelming the chat.</span></li>
+                <li><span class="check">+</span><span>Keep Overview to the main counts users need.</span></li>
+                <li><span class="check">+</span><span>Use confirmation for risky bulk actions like clearing chats to bin.</span></li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Do Not</h3>
+              <ul class="checklist">
+                <li><span class="x">-</span><span>Bring backend endpoints into the current frontend.</span></li>
+                <li><span class="x">-</span><span>Reintroduce identity review or access model UI into the current build.</span></li>
+                <li><span class="x">-</span><span>Add dense cards or extra dashboards just to fill space.</span></li>
+                <li><span class="x">-</span><span>Make Data Health feel like a technical control panel.</span></li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="done">
+          <h2><span class="num">11</span> Current Scope</h2>
+          <p class="lede">
+            This is the current state the boss should review. The frontend is already simplified and ready to share as a live working copy.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Area</th>
+                  <th>Included Now</th>
+                  <th>Why It Matters</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Shell</td>
+                  <td>Logo, workspace switcher, navigation, spaces, settings, archive, bin, and responsive framing.</td>
+                  <td>Shows the whole app structure clearly from the first view.</td>
+                </tr>
+                <tr>
+                  <td>Overview</td>
+                  <td>Total students in program and schools only.</td>
+                  <td>Keeps the dashboard simple and boss-friendly.</td>
+                </tr>
+                <tr>
+                  <td>Data Health</td>
+                  <td>Four summary cards, key feeds, and a short check list.</td>
+                  <td>Communicates status without too much visual weight.</td>
+                </tr>
+                <tr>
+                  <td>Settings</td>
+                  <td>Themes, look plates, workspace options, and account actions.</td>
+                  <td>Makes the app feel customizable without being cluttered.</td>
+                </tr>
+                <tr>
+                  <td>Chat and evidence</td>
+                  <td>Message thread, composer, evidence block, and chat menus.</td>
+                  <td>Keeps the assistant experience useful and readable.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card blue" style="margin-top:14px">
+            <h3>Final note</h3>
+            <p>The current frontend is the version to share and keep updating on the eddy branch.</p>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          Prepared as a current-state frontend handoff for supervisor review. Source project root: <code>/Users/mine/Desktop/Isomo</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
